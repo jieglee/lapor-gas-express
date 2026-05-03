@@ -86,3 +86,5 @@ async function login(req, res) {
             token: token
         })
 }
+
+export { register, login}
