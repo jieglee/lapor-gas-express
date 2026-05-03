@@ -14,7 +14,7 @@ async function Middleware(req, res, next) {
 
     jwt.verify(token, "supersecret", (err, result) => {
         if (err) {
-            return res.status(401).json ({ message: "Invaild Token" })
+            return res.status(403).json ({ message: "Invaild Token" })
         }
         req.user = result
         next()
