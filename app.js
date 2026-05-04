@@ -6,8 +6,8 @@ const port = 3000
 
 app.use(express.json())
 
-app.use("/api/register", authRouter)
-app.use("/api/login", authRouter)
+app.use("/api", authRouter)
+app.use("/api", authRouter)
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)

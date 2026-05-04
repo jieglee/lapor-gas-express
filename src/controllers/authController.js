@@ -1,13 +1,15 @@
-import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-import { supabase  } from "../config/supabase";
-dy
+import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt"
+import supabase from "../config/supabase.js"
+
 async function register(req, res) {
     try {
         const { name, email, password } = req.body
 
         if (!name || !email || !password) {
-            return res.status(400).json ({message : "All Fields Are Required"})
+            return res.status(400).json({
+                message: "All fields are required"
+            })
         }
 
         const { data: existingUser } = await supabase
@@ -17,7 +19,9 @@ async function register(req, res) {
         .single()
 
         if (existingUser) {
-            return res.status(400).json ({message : "Email Already Used"})
+            return res.status(400).json({
+                message: "Email already used"
+            })
         }
 
         const hashed = await bcrypt.hash(password, 10)
@@ -26,51 +30,63 @@ async function register(req, res) {
         .from("users")
         .insert([
             {
-                name,
-                email,
-                password: hashed,
-                role: "user"
+            name,
+            email,
+            password: hashed,
+            role: "user"
             }
         ])
         .select()
 
-        if (error) throw error
-        res.status(201).json ({message : "Register Success", data})
-
+        if (error) throw error 
+        res.status(201).json
+        ({
+            message: "Register success",
+            data
+        })
 
     } catch (error) {
-        res.status (500).json ({message : error.message})
+        res.status(500).json({
+            message: error.message
+        })
     }
 }
 
-
 async function login(req, res) {
-    if (!req.body?.name || !res.body.password) {
-        return res.status(400).json ({message : "Name and Password Are Required"})
+    if (!req.body?.email || !req.body?.password) {
+        return res.status(400).json({
+            message: "Email and password are required"
+        })
     }
 
-    const { data:users, error } = await supabase
+    const { data, error }  = await supabase
     .from("users")
     .select("*")
-    .eq ("email", req.body.email)
+    .eq("email", req.body.email)
 
     if (error) {
-        return res.status(500).json ({message : error.message })
+        return res.status(500).json({
+            message: error.message
+        })        
     }
 
-    if (!data.lenght) {
-        return register.status(400).json ({message : "Login Failed!" })
+    if (!data.length) {
+        return res.status(404).json({
+            message: "login failed!"
+        })
     }
 
     const user = data[0]
 
-    const inValid = await bcrypt.compare(
-        req.body.password,
+    const isValid = await bcrypt.compare(
+        req.body.password, 
         user.password
     )
 
     if (!isValid) {
-        return res.status(400).json ({message : "Login Failed!" })
+        return res.status(400).json({
+            message: "Login failed!"
+        })
     }
 
     const token = jwt.sign(
@@ -80,11 +96,11 @@ async function login(req, res) {
             role:user.role
         },
         "supersecret")
-
+    
         res.json({
-            message: "Login Success!",
-            token: token
+            message: "Login success",
+            token : token
         })
 }
 
-export { register, login}
+export { register, login }
