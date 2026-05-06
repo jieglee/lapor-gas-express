@@ -28,7 +28,7 @@ async function register(req, res) {
         const hashed = await bcrypt.hash(password, 10)
 
         const result2 = await pool.query(
-            "INSERT INTO users (name, email, password) VALUES ($1, $2, $3)",
+            "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id",
             [name, email, hashed]
         )
         
@@ -54,7 +54,7 @@ async function login(req, res) {
         }
 
         const result = await pool.query(
-            "SELECT * FROM users WHERE email = ?",
+            "SELECT * FROM users WHERE email = $1",
             [req.body.email]
         )
 
@@ -85,7 +85,8 @@ async function login(req, res) {
                 name: user.name,
                 role: user.role
             },
-            "supersecret"
+            "supersecret",
+            {expiresIn: "1d"}
         )
 
         res.json({
