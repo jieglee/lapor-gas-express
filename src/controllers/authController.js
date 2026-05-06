@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
-import connection from "../config/database.js"
+import pool from "../config/database.js"
 
 async function register(req, res) {
     try {
@@ -12,10 +12,12 @@ async function register(req, res) {
             })
         }
 
-        const [users] = await connection.query(
-            "SELECT * FROM users WHERE email = ?",
+        const result = await pool.query(
+            "SELECT * FROM users WHERE email = $1",
             [email]
         )
+
+        const users = result.rows
 
         if (users.length) {
             return res.status(400).json({
@@ -25,14 +27,15 @@ async function register(req, res) {
 
         const hashed = await bcrypt.hash(password, 10)
 
-        const [result] = await connection.query(
-            "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+        const result2 = await pool.query(
+            "INSERT INTO users (name, email, password) VALUES ($1, $2, $3)",
             [name, email, hashed]
         )
+        
 
         res.status(201).json({
             message: "Register success",
-            user_id: result.insertId
+            user_id: result2.rows[0].id
         })
 
     } catch (error) {
@@ -50,10 +53,12 @@ async function login(req, res) {
             })
         }
 
-        const [users] = await connection.query(
+        const result = await pool.query(
             "SELECT * FROM users WHERE email = ?",
             [req.body.email]
         )
+
+        const users = result.rows
 
         if (!users.length) {
             return res.status(404).json({

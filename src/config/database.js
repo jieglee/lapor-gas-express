@@ -1,10 +1,13 @@
-import mysql from 'mysql2/promise';
+import pkg from "pg";
+const { Pool } = pkg;
 
-const connection = await mysql.createConnection({
-    host:     'localhost',
-    user:     'root',
-    database: 'db_aas_pengaduan',
-    password: 'amantaruna20'
-});
 
-export default connection
+//connection pool database 
+const pool = new Pool ({
+    host: "localhost",
+    user: "postgres",
+    database: "db_laporgas",
+    port: 5432
+})
+
+export default pool;
