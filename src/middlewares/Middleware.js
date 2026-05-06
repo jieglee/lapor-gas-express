@@ -1,7 +1,7 @@
 import express from "express"
 import jwt from "jsonwebtoken"
 
-const express = express.Router()
+const router = express.Router()
 
 async function Middleware(req, res, next) {
     const tokenjwt = req.headers['authorization']
@@ -10,7 +10,7 @@ async function Middleware(req, res, next) {
         return res.status(401).json({ message: "No Token Provided" })
     }
 
-    const token = tokenjwt.split ("")[1]
+    const token = tokenjwt.split (" ")[1]
 
     jwt.verify(token, "supersecret", (err, result) => {
         if (err) {

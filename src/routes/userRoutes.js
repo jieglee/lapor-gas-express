@@ -1,11 +1,14 @@
 import express from "express"
 import * as user from "../controllers/userController.js"
-import { verifyToken, checkRole } from "../middleware/auth.js"
+import { Middleware } from "../middlewares/Middleware.js"
+import { allowRoles } from "../middlewares/AllowRole.js"
 
 const router = express.Router()
 
-router.get("/", verifyToken, checkRole(['superadmin']), user.getUsers)
-router.patch("/:id/role", verifyToken, checkRole(['superadmin']), user.updateRole)
-router.delete("/:id", verifyToken, checkRole(['superadmin']), user.deleteUser)
+router.get("/", Middleware, allowRoles('superadmin'), user.getUsers)
+router.get("/:id", Middleware, allowRoles('superadmin'), user.getUserById)
+router.post("/", allowRoles('superadmin'), user.createUser)
+router.patch("/:id/role", Middleware, allowRoles('superadmin'), user.updateRole)
+router.delete("/:id", Middleware, allowRoles('superadmin'), user.deleteUser)
 
 export default router

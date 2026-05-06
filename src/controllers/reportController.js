@@ -5,10 +5,14 @@ export const createReport = async (req, res) => {
     try {
         const { title, description, category_id } = req.body
 
+        const image_url = req.file
+            ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+            : null
+
         const result = await pool.query(
-            `INSERT INTO reports (user_id, title, description, category_id)
-             VALUES ($1, $2, $3, $4) RETURNING *`,
-            [req.user.id, title, description, category_id]
+            `INSERT INTO reports (user_id, title, description, category_id, image_url)
+             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [req.user.id, title, description, category_id, image_url]
         )
 
         res.status(201).json(result.rows[0])
