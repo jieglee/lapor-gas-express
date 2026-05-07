@@ -25,12 +25,30 @@ export const createReport = async (req, res) => {
 //GET ALL 
 export const getReports = async (req, res) => {
     try {
+        const { sort } = req.query
+
+        let orderQuery = "r.created_at DESC"
+
+        if (sort === "priority") {
+            orderQuery = `
+            CASE 
+                WHEN r.priority = 'urgent' THEN 1
+                WHEN r.priority = 'high' THEN 2
+                WHEN r.priority = 'medium' THEN 3
+                WHEN r.priority = 'low' THEN 4
+            END`
+        }
+
+        if (sort === "category") {
+            orderQuery = "c.name ASC"
+        }
+
         const result = await pool.query(`
             SELECT r.*, u.name AS user_name, c.name AS category_name
             FROM reports r
             JOIN users u ON r.user_id = u.id
             LEFT JOIN categories c ON r.category_id = c.id
-            ORDER BY r.created_at DESC
+            ORDER BY ${orderQuery}
         `)
 
         res.json(result.rows)
@@ -88,4 +106,54 @@ export const deleteReport = async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: err.message })
     }
+}
+
+export const approveReport = async (req, res) => {
+    const result = await pool.query(
+            `UPDATE reports
+            SET status = 'approved',
+                approved_by = $2,
+                approved_at = NOW()
+            WHERE id = $1
+            RETURNING *`,
+        [req.params.id, req.user.id]
+    )
+
+    res.json(result.rows[0])
+}
+
+export const rejectReport = async (req, res) => {
+    const result = await pool.query(
+            `UPDATE reports 
+            SET status = 'rejected'
+            WHERE id = $1
+            RETURNING *`,
+        [req.params.id]
+    )
+
+    res.json(result.rows[0])
+}
+
+export const progressReport = async (req, res) => {
+    const result = await pool.query(
+            `UPDATE reports 
+            SET status = 'on_progress'
+            WHERE id = $1
+            RETURNING *`,
+        [req.params.id]
+    )
+
+    res.json(result.rows[0])
+}
+
+export const completeReport = async (req, res) => {
+    const result = await pool.query(
+            `UPDATE reports 
+            SET status = 'completed'
+            WHERE id = $1
+            RETURNING *`,
+        [req.params.id]
+    )
+
+    res.json(result.rows[0])
 }
