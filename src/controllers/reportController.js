@@ -3,39 +3,84 @@ import {
     createReportSchema,
     updateReportSchema,
 } from "../validation/report.js";
+import { STATUS } from "../constants/status.js";
 
-//CREATE
 export const createReport = async (req, res) => {
     try {
         const image_url = req.file?.path || null;
+
         const validated = createReportSchema.parse({
             ...req.body,
             category_id: Number(req.body.category_id),
-            latitude: req.body.latitude ? Number(req.body.latitude) : undefined,
+            latitude: req.body.latitude
+                ? Number(req.body.latitude)
+                : undefined,
 
-            longitude: req.body.longitude ? Number(req.body.longitude) : undefined,
+            longitude: req.body.longitude
+                ? Number(req.body.longitude)
+                : undefined,
         });
 
-        const { title, description, category_id, location, priority, latitude, longitude, }
-            = validated;
+        const {
+            title,
+            description,
+            category_id,
+            location,
+            priority,
+            latitude,
+            longitude,
+        } = validated;
 
         const result = await pool.query(
-            `INSERT INTO reports 
-            (user_id, title, description, category_id, location, priority, latitude, longitude, image_url)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-            [req.user.id, title, description, category_id, location, priority, latitude, longitude, image_url,],
+            `INSERT INTO reports
+            (
+                user_id,
+                title,
+                description,
+                category_id,
+                location,
+                priority,
+                latitude,
+                longitude,
+                image_url
+            )
+            VALUES
+            (
+                $1, $2, $3, $4, $5,
+                $6, $7, $8, $9
+            )
+            RETURNING *`,
+            [
+                req.user.id,
+                title,
+                description,
+                category_id,
+                location,
+                priority,
+                latitude,
+                longitude,
+                image_url,
+            ]
         );
 
         res.status(201).json(result.rows[0]);
+
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({
+            message: err.message,
+        });
     }
 };
 
-//GET ALL
+
 export const getReports = async (req, res) => {
     try {
-        const { category, status, priority, sort } = req.query;
+        const {
+            category,
+            status,
+            priority,
+            sort,
+        } = req.query;
 
         const filters = [];
         const values = [];
@@ -46,24 +91,37 @@ export const getReports = async (req, res) => {
                 u.name AS user_name,
                 c.name AS category_name
             FROM reports r
-            JOIN users u ON r.user_id = u.id
-            LEFT JOIN categories c ON r.category_id = c.id
+            JOIN users u
+                ON r.user_id = u.id
+            LEFT JOIN categories c
+                ON r.category_id = c.id
         `;
 
-        // FILTERS
+        // FILTER CATEGORY
         if (category) {
             values.push(category);
-            filters.push(`r.category_id = $${values.length}`);
+
+            filters.push(
+                `r.category_id = $${values.length}`
+            );
         }
 
+        // FILTER STATUS
         if (status) {
             values.push(status);
-            filters.push(`r.status = $${values.length}`);
+
+            filters.push(
+                `r.status = $${values.length}`
+            );
         }
 
+        // FILTER PRIORITY
         if (priority) {
             values.push(priority);
-            filters.push(`r.priority = $${values.length}`);
+
+            filters.push(
+                `r.priority = $${values.length}`
+            );
         }
 
         // WHERE
@@ -71,10 +129,14 @@ export const getReports = async (req, res) => {
             query += ` WHERE ${filters.join(" AND ")}`;
         }
 
-        // SORT
+        // SORTING
         const sortMap = {
             newest: "r.created_at DESC",
+
             oldest: "r.created_at ASC",
+
+            category: "c.name ASC",
+
             priority: `
                 CASE
                     WHEN r.priority = 'urgent' THEN 1
@@ -83,13 +145,27 @@ export const getReports = async (req, res) => {
                     WHEN r.priority = 'low' THEN 4
                 END
             `,
+
+            status: `
+                CASE
+                    WHEN r.status = '${STATUS.PENDING}' THEN 1
+                    WHEN r.status = '${STATUS.APPROVED}' THEN 2
+                    WHEN r.status = '${STATUS.ON_PROGRESS}' THEN 3
+                    WHEN r.status = '${STATUS.COMPLETED}' THEN 4
+                    WHEN r.status = '${STATUS.REJECTED}' THEN 5
+                END
+            `,
         };
 
-        query += ` ORDER BY ${sortMap[sort] || sortMap.newest}`;
+        query += `
+            ORDER BY
+            ${sortMap[sort] || sortMap.newest}
+        `;
 
         const result = await pool.query(query, values);
 
         res.json(result.rows);
+
     } catch (err) {
         res.status(500).json({
             message: err.message,
@@ -97,17 +173,19 @@ export const getReports = async (req, res) => {
     }
 };
 
-//GET DETAIL
+
 export const getReportById = async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT * FROM reports WHERE id = $1",
+            `SELECT *
+             FROM reports
+             WHERE id = $1`,
             [req.params.id]
         );
 
         if (!result.rows[0]) {
             return res.status(404).json({
-                message: "Report not found"
+                message: "Report not found",
             });
         }
 
@@ -115,12 +193,12 @@ export const getReportById = async (req, res) => {
 
     } catch (err) {
         res.status(500).json({
-            message: err.message
+            message: err.message,
         });
     }
 };
 
-// UPDATE
+
 export const updateReport = async (req, res) => {
     try {
         const validated = updateReportSchema.parse(req.body);
@@ -134,9 +212,11 @@ export const updateReport = async (req, res) => {
             longitude,
         } = validated;
 
-        // cek report dulu
+        // CHECK REPORT
         const checkReport = await pool.query(
-            "SELECT * FROM reports WHERE id = $1",
+            `SELECT *
+             FROM reports
+             WHERE id = $1`,
             [req.params.id]
         );
 
@@ -148,7 +228,7 @@ export const updateReport = async (req, res) => {
             });
         }
 
-        // limit edit 1x
+        // LIMIT EDIT ONLY 1x
         if (report.edit_count >= 1) {
             return res.status(403).json({
                 message: "Report can only be edited once",
@@ -188,32 +268,41 @@ export const updateReport = async (req, res) => {
     }
 };
 
-// DELETE
 export const deleteReport = async (req, res) => {
     try {
-        await pool.query("DELETE FROM reports WHERE id = $1", [req.params.id]);
+        await pool.query(
+            `DELETE FROM reports
+             WHERE id = $1`,
+            [req.params.id]
+        );
 
-        res.json({ message: "Deleted" });
+        res.json({
+            message: "Deleted",
+        });
+
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({
+            message: err.message,
+        });
     }
 };
 
 export const updateReportStatus = async (req, res) => {
     try {
-        const { status } = req.body
+        const { status } = req.body;
 
         const allowedStatus = [
-            "approved",
-            "rejected",
-            "on_progress",
-            "completed"
-        ]
+            STATUS.APPROVED,
+            STATUS.REJECTED,
+            STATUS.ON_PROGRESS,
+            STATUS.COMPLETED,
+        ];
 
+        // INVALID STATUS
         if (!allowedStatus.includes(status)) {
             return res.status(400).json({
-                message: "Invalid status"
-            })
+                message: "Invalid status",
+            });
         }
 
         const result = await pool.query(
@@ -221,14 +310,24 @@ export const updateReportStatus = async (req, res) => {
              SET status = $1
              WHERE id = $2
              RETURNING *`,
-            [status, req.params.id]
-        )
+            [
+                status,
+                req.params.id,
+            ]
+        );
 
-        res.json(result.rows[0])
+        // REPORT NOT FOUND
+        if (!result.rows[0]) {
+            return res.status(404).json({
+                message: "Report not found",
+            });
+        }
+
+        res.json(result.rows[0]);
 
     } catch (err) {
         res.status(500).json({
-            message: err.message
-        })
+            message: err.message,
+        });
     }
-}
+};
