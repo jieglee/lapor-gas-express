@@ -1,59 +1,36 @@
-import pool from "../config/database.js"
+import {
+    createComment,
+    getCommentsByReport,
+    deleteComment,
+} from "../services/comment.service.js"
 
-// CREATE
-export const createComment = async (req, res) => {
+export async function handleCreateComment(req, res) {
     try {
         const { report_id, comment } = req.body
+        const data = await createComment({ report_id, user_id: req.user.id, comment })
 
-        const result = await pool.query(
-            `INSERT INTO comments (report_id, user_id, comment)
-             VALUES ($1, $2, $3) RETURNING *`,
-            [report_id, req.user.id, comment]
-        )
-        res.status(201).json(result.rows[0])
-
+        res.status(201).json(data)
     } catch (err) {
-        res.status(500).json(
-            { message: err 
-            }
-        )
+        res.status(500).json({ message: err.message })
     }
 }
 
-// GET BY REPORT
-export const getComments = async (req, res) => {
+export async function handleGetComments(req, res) {
     try {
-        const result = await pool.query(
-                `SELECT c.*, u.name
-                FROM comments c
-                JOIN users u ON c.user_id = u.id
-                WHERE report_id = $1`,
-            [req.params.report_id]
-        )
+        const data = await getCommentsByReport(req.params.report_id)
 
-        res.json(result.rows)
-
+        res.json(data)
     } catch (err) {
-        res.status(500).json(
-            { message: err
-            }
-        )
+        res.status(500).json({ message: err.message })
     }
 }
 
-// DELETE
-export const deleteComment = async (req, res) => {
+export async function handleDeleteComment(req, res) {
     try {
-        await pool.query(
-            "DELETE FROM comments WHERE id = $1",
-            [req.params.id]
-        )
+        await deleteComment(req.params.id)
 
         res.json({ message: "Deleted" })
-
     } catch (err) {
-        res.status(500).json(
-            { message: err.message }
-        )
+        res.status(500).json({ message: err.message })
     }
 }
