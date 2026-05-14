@@ -1,7 +1,7 @@
 import express from "express"
-import * as comment from "../controllers/commentController.js"
-import { Middleware } from "../middlewares/Middleware.js"
-import onlyOwnerComment from "../middlewares/OwnerComment.js"
+import * as comment from "../controllers/comment.controller.js"
+import { Middleware } from "../middlewares/auth.middleware.js"
+import onlyOwnerComment from "../middlewares/ownerComment.guard.js"
 
 const router = express.Router()
 

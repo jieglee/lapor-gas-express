@@ -2,7 +2,7 @@ import pool from "../config/database.js";
 import {
     createReportSchema,
     updateReportSchema,
-} from "../validation/report.js";
+} from "../validation/report.validation.js";
 import { STATUS } from "../constants/status.js";
 
 export const createReport = async (req, res) => {

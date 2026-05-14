@@ -1,9 +1,9 @@
 import express from "express";
-import * as report from "../controllers/reportController.js";
-import Middleware from "../middlewares/Middleware.js";
-import upload from "../controllers/cloudinaryUpload.js";
-import allowRoles from "../middlewares/AllowRole.js";
-import OnlyOwnerReport from "../middlewares/OnlyOwner.js";
+import * as report from "../controllers/report.controller.js";
+import Middleware from "../middlewares/auth.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
+import allowRoles from "../middlewares/role.guard.js";
+import OnlyOwnerReport from "../middlewares/owner.guard.js";
 
 const router = express.Router();
 

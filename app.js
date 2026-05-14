@@ -3,10 +3,10 @@ import multer from "multer"
 import cors from "cors"
 import dotenv from "dotenv"
 
-import authRouter from "./src/routes/authRoute.js"
-import userRouter from "./src/routes/userRoutes.js"
-import reportRouter from "./src/routes/reportRoutes.js"
-import commentRouter from "./src/routes/commentRoutes.js"
+import authRouter from "./src/routes/auth.route.js"
+import userRouter from "./src/routes/user.route.js"
+import reportRouter from "./src/routes/report.route.js"
+import commentRouter from "./src/routes/comment.route.js"
 
 dotenv.config()
 

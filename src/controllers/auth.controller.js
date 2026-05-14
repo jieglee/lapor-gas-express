@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
 import pool from "../config/database.js"
-import { registerSchema, loginSchema } from "../validation/auth.js"
+import { registerSchema, loginSchema } from "../validation/auth.validation.js"
 import { successResponse, errorResponse } from "../utils/response.js"
 import dotenv from "dotenv"
 

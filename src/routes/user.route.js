@@ -1,7 +1,7 @@
 import express from "express";
-import * as user from "../controllers/userController.js";
-import Middleware from "../middlewares/Middleware.js";
-import allowRoles from "../middlewares/AllowRole.js";
+import * as user from "../controllers/user.controller.js";
+import Middleware from "../middlewares/auth.middleware.js";
+import allowRoles from "../middlewares/role.guard.js";
 
 const router = express.Router();
 
