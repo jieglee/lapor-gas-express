@@ -1,19 +1,17 @@
-import express from "express"
-import * as report from "../controllers/reportController.js"
-import { Middleware } from "../middlewares/Middleware.js"
-import upload from "../middlewares/upload.js"
-import  allowRole from "../middlewares/allowRole.js"
+import express from "express";
+import * as report from "../controllers/reportController.js";
+import Middleware from "../middlewares/Middleware.js";
+import upload from "../controllers/cloudinaryUpload.js";
+import allowRoles from "../middlewares/AllowRole.js";
+import OnlyOwnerReport from "../middlewares/OnlyOwner.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.post("/", upload.single("image"), Middleware, report.createReport)
-router.get("/", report.getReports)
-router.get("/:id", report.getReportById)
-router.put("/:id", Middleware, report.updateReport)
-router.delete("/:id", Middleware, report.deleteReport)
-router.patch("/id/approve", Middleware, allowRole("admin", "superadmin"), report.approveReport)
-router.patch("/id/reject", Middleware, allowRole("admin", "superadmin"), report.rejectReport)
-router.patch("/id/progress", Middleware, allowRole("admin", "superadmin"), report.progressReport)
-router.patch("/id/complete", Middleware, allowRole("admin", "superadmin"), report.completeReport)
+router.get("/", report.getReports);
+router.get("/:id", report.getReportById);
+router.post("/", Middleware, upload.single("image"), report.createReport);
+router.put("/:id", Middleware, OnlyOwnerReport, report.updateReport);
+router.delete("/:id", Middleware, OnlyOwnerReport, report.deleteReport);
+router.patch("/:id/status", Middleware, allowRoles("admin", "superadmin"), report.updateReportStatus);
 
-export default router
+export default router;

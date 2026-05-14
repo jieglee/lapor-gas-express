@@ -1,16 +1,15 @@
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
 import pool from "../config/database.js"
+import { registerSchema, loginSchema } from "../validation/auth.js"
+import { successResponse, errorResponse } from "../utils/response.js"
+import dotenv from "dotenv"
 
+dotenv.config()
 async function register(req, res) {
     try {
-        const { name, email, password } = req.body
-
-        if (!name || !email || !password) {
-            return res.status(400).json({
-                message: "All fields are required"
-            })
-        }
+        const validated = registerSchema.parse(req.body)
+        const { name, email, password } = validated
 
         const result = await pool.query(
             "SELECT * FROM users WHERE email = $1",
@@ -20,63 +19,53 @@ async function register(req, res) {
         const users = result.rows
 
         if (users.length) {
-            return res.status(400).json({
-                message: "Email already used"
-            })
+            return errorResponse(res, "Email already used", 400)
         }
 
         const hashed = await bcrypt.hash(password, 10)
 
-        const result2 = await pool.query(
+        const newUser = await pool.query(
             "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id",
             [name, email, hashed]
         )
         
 
-        res.status(201).json({
+        successResponse(res, {
             message: "Register success",
-            user_id: result2.rows[0].id
-        })
+            user_id: newUser.rows[0].id
+        }, "User registered successfully", 201)
 
     } catch (error) {
-        res.status(500).json({
-            message: error.message
-        })
+        errorResponse(res, error.message, 500)
     }
 }
 
 async function login(req, res) {
     try {
-        if (!req.body?.email || !req.body?.password) {
-            return res.status(400).json({
-                message: "Email and password are required"
-            })
-        }
+        const validated = loginSchema.parse(req.body)
+
+        const { email, password } = validated
 
         const result = await pool.query(
             "SELECT * FROM users WHERE email = $1",
-            [req.body.email]
+            [email]
         )
 
         const users = result.rows
 
         if (!users.length) {
-            return res.status(404).json({
-                message: "Login failed!"
-            })
+            return errorResponse(res, "Login failed!", 404)
         }
 
         const user = users[0]
 
         const isValid = await bcrypt.compare(
-            req.body.password,
+            password,
             user.password
         )
 
         if (!isValid) {
-            return res.status(400).json({
-                message: "Login failed!"
-            })
+            return errorResponse(res, "Login failed!", 400)
         }
 
         const token = jwt.sign(
@@ -85,19 +74,19 @@ async function login(req, res) {
                 name: user.name,
                 role: user.role
             },
-            "supersecret",
-            {expiresIn: "1d"}
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1d"
+            }
         )
 
-        res.json({
+        successResponse(res, {
             message: "Login success",
             token
-        })
+        }, "User logged in successfully", 200)
 
     } catch (error) {
-        res.status(500).json({
-            message: error.message
-        })
+        errorResponse(res, error.message, 500)
     }
 }
 

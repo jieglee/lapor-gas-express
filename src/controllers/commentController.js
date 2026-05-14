@@ -10,11 +10,13 @@ export const createComment = async (req, res) => {
              VALUES ($1, $2, $3) RETURNING *`,
             [report_id, req.user.id, comment]
         )
-
         res.status(201).json(result.rows[0])
 
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        res.status(500).json(
+            { message: err 
+            }
+        )
     }
 }
 
@@ -32,7 +34,10 @@ export const getComments = async (req, res) => {
         res.json(result.rows)
 
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        res.status(500).json(
+            { message: err
+            }
+        )
     }
 }
 
@@ -47,6 +52,8 @@ export const deleteComment = async (req, res) => {
         res.json({ message: "Deleted" })
 
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        res.status(500).json(
+            { message: err.message }
+        )
     }
 }

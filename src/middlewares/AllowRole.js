@@ -9,4 +9,4 @@ function allowRoles(...roles) {
     }
 }
 
-export {allowRoles}
+export default allowRoles
