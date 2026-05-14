@@ -30,23 +30,10 @@ export const createReportSchema = z.object({
 })
 
 export const updateReportSchema = z.object({
-    title: z
-        .string()
-        .min(5)
-        .optional(),
-
-    description: z
-        .string()
-        .min(10)
-        .optional(),
-
-    status: z
-        .enum([
-            "pending",
-            "approved",
-            "rejected",
-            "on_progress",
-            "completed"
-        ])
-        .optional()
+    title: z.string().min(5).optional(),
+    description: z.string().min(10).optional(),
+    status: z.enum(["pending", "approved", "rejected", "on_progress", "completed"]).optional(),
+    priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
 })
