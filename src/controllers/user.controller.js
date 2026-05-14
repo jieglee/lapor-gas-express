@@ -1,52 +1,59 @@
-import pool from "../config/database.js"
-import bcrypt from "bcrypt";
+import {
+    getAllUsers,
+    getUserById,
+    createUser,
+    updateUserRole,
+    deleteUser,
+} from "../services/user.service.js"
 
-
-// GET ALL USERS
-export const getUsers = async (req, res) => {
-    const result = await pool.query("SELECT * FROM users")
-    res.json(result.rows)
+export async function handleGetUsers(req, res) {
+    try {
+        const data = await getAllUsers()
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
 }
 
-export const getUserById = async (req, res) => {
-    const result = await pool.query(
-        "SELECT * FROM users WHERE id = $1",
-        [req.params.id]
-    )
-    res.json(result.rows[0])
+export async function handleGetUserById(req, res) {
+    try {
+        const data = await getUserById(req.params.id)
+
+        if (!data) {
+            return res.status(404).json({ message: "User not found" })
+        }
+
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
 }
 
-export const createUser = async (req, res) => {
-    const { name, email, password} = req.body
+export async function handleCreateUser(req, res) {
+    try {
+        const { name, email, password } = req.body
+        const data = await createUser({ name, email, password })
 
-    const hashed = await bcrypt.hash(password, 10)
-
-    const result = await pool.query(
-        "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *",
-        [name, email, hashed])
-
-        res.json(result.rows[0])
-
+        res.status(201).json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
 }
 
-// UPDATE ROLE
-export const updateRole = async (req, res) => {
-    const { role } = req.body
-
-    const result = await pool.query(
-        "UPDATE users SET role = $1 WHERE id = $2 RETURNING *",
-        [role, req.params.id]
-    )
-
-    res.json(result.rows[0])
+export async function handleUpdateRole(req, res) {
+    try {
+        const data = await updateUserRole(req.params.id, req.body.role)
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
 }
 
-// DELETE USER
-export const deleteUser = async (req, res) => {
-    await pool.query(
-        "DELETE FROM users WHERE id = $1",
-        [req.params.id]
-    )
-
-    res.json({ message: "User deleted" })
+export async function handleDeleteUser(req, res) {
+    try {
+        await deleteUser(req.params.id)
+        res.json({ message: "User deleted" })
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
 }
