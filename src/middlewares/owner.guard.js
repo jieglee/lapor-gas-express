@@ -1,6 +1,6 @@
 import pool from "../config/database.js"
 
-function OnlyOwnerReport(req, res, next) {
+async function OnlyOwnerReport(req, res, next) {
     try {
     const userId = req.user.id
     const reportId = req.params.id

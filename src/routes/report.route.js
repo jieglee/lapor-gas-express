@@ -7,11 +7,11 @@ import OnlyOwnerReport from "../middlewares/owner.guard.js";
 
 const router = express.Router();
 
-router.get("/", report.getReports);
-router.get("/:id", report.getReportById);
-router.post("/", Middleware, upload.single("image"), report.createReport);
-router.put("/:id", Middleware, OnlyOwnerReport, report.updateReport);
-router.delete("/:id", Middleware, OnlyOwnerReport, report.deleteReport);
-router.patch("/:id/status", Middleware, allowRoles("admin", "superadmin"), report.updateReportStatus);
+router.get("/", report.handleGetReports);
+router.get("/:id", report.handleGetReportById);
+router.post("/", Middleware, upload.single("image"), report.handleCreateReport);
+router.put("/:id", Middleware, OnlyOwnerReport, report.handleUpdateReport);
+router.delete("/:id", Middleware, OnlyOwnerReport, report.handleDeleteReport);
+router.patch("/:id/status", Middleware, allowRoles("admin", "superadmin"), report.handleUpdateReportStatus);
 
 export default router;
