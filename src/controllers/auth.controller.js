@@ -25,3 +25,10 @@ export async function login(req, res) {
         errorResponse(res, error.message, status)
     }
 }
+
+export async function logout(req, res) {
+    return res.status(200).json({
+        success: true,
+        message: "Logout berhasil",
+    });
+}
