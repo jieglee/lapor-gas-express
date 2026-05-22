@@ -10,5 +10,6 @@ router.get("/:id", Middleware, allowRoles("superadmin"), user.handleGetUserById)
 router.post("/", Middleware, allowRoles("superadmin"), user.handleCreateUser);
 router.patch("/:id/role", Middleware, allowRoles("superadmin"), user.handleUpdateRole);
 router.delete("/:id", Middleware, allowRoles("superadmin"), user.handleDeleteUser);
+router.patch("/me/profile", Middleware, user.handleUpdateProfile);
 
 export default router;

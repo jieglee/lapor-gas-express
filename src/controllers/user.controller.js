@@ -4,6 +4,7 @@ import {
     createUser,
     updateUserRole,
     deleteUser,
+    updateProfile
 } from "../services/user.service.js"
 
 export async function handleGetUsers(req, res) {
@@ -55,5 +56,15 @@ export async function handleDeleteUser(req, res) {
         res.json({ message: "User deleted" })
     } catch (err) {
         res.status(500).json({ message: err.message })
+    }
+}
+
+export async function handleUpdateProfile(req, res) {
+    try {
+        const { name, email, password } = req.body
+        const data = await updateProfile(req.user.id, { name, email, password })
+        res.json(data)
+    } catch (err) {
+        res.status(err.status || 500).json({ message: err.message })
     }
 }

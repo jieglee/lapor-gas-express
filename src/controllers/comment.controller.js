@@ -7,8 +7,12 @@ import {
 export async function handleCreateComment(req, res) {
     try {
         const { report_id, comment } = req.body
-        const data = await createComment({ report_id, user_id: req.user.id, comment })
+        // Auto-detect type dari role user
+        const type = (req.user.role === "admin" || req.user.role === "superadmin")
+            ? "official"
+            : "public"
 
+        const data = await createComment({ report_id, user_id: req.user.id, comment, type })
         res.status(201).json(data)
     } catch (err) {
         res.status(500).json({ message: err.message })
@@ -18,7 +22,6 @@ export async function handleCreateComment(req, res) {
 export async function handleGetComments(req, res) {
     try {
         const data = await getCommentsByReport(req.params.report_id)
-
         res.json(data)
     } catch (err) {
         res.status(500).json({ message: err.message })
@@ -28,7 +31,6 @@ export async function handleGetComments(req, res) {
 export async function handleDeleteComment(req, res) {
     try {
         await deleteComment(req.params.id)
-
         res.json({ message: "Deleted" })
     } catch (err) {
         res.status(500).json({ message: err.message })

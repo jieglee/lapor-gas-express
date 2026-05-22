@@ -6,15 +6,13 @@ const storage = new CloudinaryStorage({
     cloudinary,
     params: {
         folder: "reports",
-        allowed_formats: ["jpg", "png", "jpeg"],
-        public_id: (req, file) => {
-            return Date.now() + "-" + file.originalname
-        }
+        allowed_formats: ["jpg", "png", "jpeg", "webp"],
+        public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\s/g, "_")}`,
     }
 })
 
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith("image")) {
+    if (file.mimetype.startsWith("image/")) {
         cb(null, true)
     } else {
         cb(new Error("Only image files allowed"), false)
@@ -24,9 +22,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage,
     fileFilter,
-    limits: {
-        fileSize: 2 * 1024 * 1024
-    }
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB per file
 })
 
 export default upload
