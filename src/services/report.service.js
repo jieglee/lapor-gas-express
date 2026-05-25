@@ -136,7 +136,7 @@ export async function getReportById(id) {
 
 // ── UPDATE REPORT ─────────────────────────────────────
 export async function updateReport(id, data) {
-    const { title, description, status, priority, latitude, longitude } = data
+    const { title, description, priority } = data
 
     const check = await pool.query("SELECT * FROM reports WHERE id = $1", [id])
     const report = check.rows[0]
@@ -146,10 +146,10 @@ export async function updateReport(id, data) {
 
     const result = await pool.query(
         `UPDATE reports
-         SET title=$1, description=$2, status=$3, priority=$4,
-             latitude=$5, longitude=$6, updated_at=NOW(), edit_count=edit_count+1
-         WHERE id=$7 RETURNING *`,
-        [title, description, status, priority, latitude, longitude, id]
+         SET title=$1, description=$2, priority=$3,
+             updated_at=NOW(), edit_count=edit_count+1
+         WHERE id=$4 RETURNING *`,
+        [title, description, priority, id]
     )
 
     return result.rows[0]
@@ -161,16 +161,36 @@ export async function deleteReport(id) {
 }
 
 // ── UPDATE STATUS ─────────────────────────────────────
-export async function updateReportStatus(id, status) {
-    const allowedStatus = [STATUS.APPROVED, STATUS.REJECTED, STATUS.ON_PROGRESS, STATUS.COMPLETED]
-    if (!allowedStatus.includes(status)) throw { status: 400, message: "Invalid status" }
+export async function updateReportStatus(id, status, reject_reason = null) {
+    const allowedStatus = [
+        STATUS.APPROVED,
+        STATUS.REJECTED,
+        STATUS.ON_PROGRESS,
+        STATUS.COMPLETED
+    ]
+
+    if (!allowedStatus.includes(status)) {
+        throw { status: 400, message: "Invalid status" }
+    }
 
     const result = await pool.query(
-        "UPDATE reports SET status=$1 WHERE id=$2 RETURNING *",
-        [status, id]
+        `UPDATE reports
+         SET
+            status = $1,
+            reject_reason = $2
+         WHERE id = $3
+         RETURNING *`,
+        [
+            status,
+            status === STATUS.REJECTED ? reject_reason : null,
+            id
+        ]
     )
 
-    if (!result.rows[0]) throw { status: 404, message: "Report not found" }
+    if (!result.rows[0]) {
+        throw { status: 404, message: "Report not found" }
+    }
+
     return result.rows[0]
 }
 

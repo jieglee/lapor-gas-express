@@ -54,10 +54,10 @@ export async function handleGetReportById(req, res) {
     }
 }
 
-export async function handleUpdateReport(req, res) {
+export async function handleUpdateReportStatus(req, res) {
     try {
-        const validated = updateReportSchema.parse(req.body)
-        const data = await updateReport(req.params.id, validated)
+        const { status, reject_reason } = req.body
+        const data = await updateReportStatus(req.params.id, status, reject_reason ?? null)
         res.json(data)
     } catch (err) {
         res.status(err.status || 500).json({ message: err.message })
@@ -73,15 +73,15 @@ export async function handleDeleteReport(req, res) {
     }
 }
 
-export async function handleUpdateReportStatus(req, res) {
+export async function handleUpdateReport(req, res) {
     try {
-        const data = await updateReportStatus(req.params.id, req.body.status)
+        const validated = updateReportSchema.parse(req.body)
+        const data = await updateReport(req.params.id, validated)
         res.json(data)
     } catch (err) {
         res.status(err.status || 500).json({ message: err.message })
     }
 }
-
 export async function handleToggleUpvote(req, res) {
     try {
         const data = await toggleUpvote(Number(req.params.id), req.user.id)
