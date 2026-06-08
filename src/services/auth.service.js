@@ -51,3 +51,40 @@ export async function loginUser({ email, password }) {
 
     return { token }
 }
+
+export async function verifyEmailAndName({ email, name }) {
+    const result = await pool.query(
+        "SELECT id FROM users WHERE email = $1 AND LOWER(name) = LOWER($2)",
+        [email, name]
+    )
+
+    if (!result.rows.length) {
+        throw { status: 400, message: "Email dan nama tidak cocok." }
+    }
+
+    return { verified: true }
+}
+
+export async function resetPasswordByName({ email, name, newPassword }) {
+    const result = await pool.query(
+        "SELECT id FROM users WHERE email = $1 AND LOWER(name) = LOWER($2)",
+        [email, name]
+    )
+
+    if (!result.rows.length) {
+        throw { status: 400, message: "Email dan nama tidak cocok." }
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+        throw { status: 400, message: "Password minimal 6 karakter." }
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10)
+
+    await pool.query(
+        "UPDATE users SET password = $1 WHERE email = $2",
+        [hashed, email]
+    )
+
+    return { message: "Password berhasil diubah." }
+}

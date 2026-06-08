@@ -1,14 +1,29 @@
 import { registerSchema, loginSchema } from "../validation/auth.validation.js"
 import { successResponse, errorResponse } from "../utils/response.js"
 import { registerUser, loginUser } from "../services/auth.service.js"
+import { ZodError } from "zod"
+import { verifyEmailAndName, resetPasswordByName } from "../services/auth.service.js"
 
 export async function register(req, res) {
     try {
         const validated = registerSchema.parse(req.body)
         const data = await registerUser(validated)
 
-        successResponse(res, { message: "Register success", ...data }, "User registered successfully", 201)
+        successResponse(
+            res,
+            { message: "Register success", ...data },
+            "User registered successfully",
+            201
+        )
     } catch (error) {
+        if (error instanceof ZodError) {
+            return errorResponse(
+                res,
+                error.issues[0].message,
+                400
+            )
+        }
+
         const status = error.status || 500
         errorResponse(res, error.message, status)
     }
@@ -19,8 +34,21 @@ export async function login(req, res) {
         const validated = loginSchema.parse(req.body)
         const data = await loginUser(validated)
 
-        successResponse(res, { message: "Login success", ...data }, "User logged in successfully", 200)
+        successResponse(
+            res,
+            { message: "Login success", ...data },
+            "User logged in successfully",
+            200
+        )
     } catch (error) {
+        if (error instanceof ZodError) {
+            return errorResponse(
+                res,
+                error.issues[0].message,
+                400
+            )
+        }
+
         const status = error.status || 500
         errorResponse(res, error.message, status)
     }
@@ -31,4 +59,22 @@ export async function logout(req, res) {
         success: true,
         message: "Logout berhasil",
     });
+}
+
+export async function verifyEmailAndNameHandler(req, res) {
+    try {
+        const result = await verifyEmailAndName(req.body)
+        res.json(result)
+    } catch (err) {
+        res.status(err.status ?? 500).json({ message: err.message })
+    }
+}
+
+export async function resetPasswordByNameHandler(req, res) {
+    try {
+        const result = await resetPasswordByName(req.body)
+        res.json(result)
+    } catch (err) {
+        res.status(err.status ?? 500).json({ message: err.message })
+    }
 }
