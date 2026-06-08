@@ -2,7 +2,7 @@ import express from "express"
 import multer from "multer"
 import cors from "cors"
 import dotenv from "dotenv"
-
+import aiRouter from "./src/routes/ai.route.js"
 import authRouter from "./src/routes/auth.route.js"
 import userRouter from "./src/routes/user.route.js"
 import reportRouter from "./src/routes/report.route.js"
@@ -27,6 +27,7 @@ app.use("/api", authRouter)
 app.use("/api/users", userRouter)
 app.use("/api/reports", reportRouter)
 app.use("/api/comments", commentRouter)
+app.use("/api/ai", aiRouter)
 
 app.use((err, req, res, next) => {
     console.error(err)
