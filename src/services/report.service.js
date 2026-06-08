@@ -44,7 +44,7 @@ export async function createReport({ user_id, image_urls = [], data }) {
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              RETURNING *`,
             [user_id, title, description, category_id, location, priority,
-             latitude, longitude, image_urls[0] || null]
+                latitude, longitude, image_urls[0] || null]
         )
 
         const report = result.rows[0]
@@ -54,7 +54,7 @@ export async function createReport({ user_id, image_urls = [], data }) {
             for (let i = 0; i < image_urls.length; i++) {
                 await client.query(
                     `INSERT INTO report_images (report_id, image_url, sort_order)
-                     VALUES ($1, $2, $3)`,
+             VALUES ($1, $2, $3)`,
                     [report.id, image_urls[i], i]
                 )
             }
@@ -84,9 +84,13 @@ export async function getReports({ category, status, priority, sort } = {}) {
             COUNT(DISTINCT cm.id)::int AS comment_count,
             COUNT(DISTINCT uv.id)::int AS upvote_count,
             COALESCE(
-                JSON_AGG(DISTINCT ri.image_url) FILTER (WHERE ri.image_url IS NOT NULL),
-                '[]'
-            ) AS images
+    (
+        SELECT JSON_AGG(ri.image_url ORDER BY ri.sort_order ASC)
+        FROM report_images ri
+        WHERE ri.report_id = r.id
+    ),
+    '[]'
+) AS images
         FROM reports r
         JOIN users u ON r.user_id = u.id
         LEFT JOIN categories c ON r.category_id = c.id
@@ -96,7 +100,7 @@ export async function getReports({ category, status, priority, sort } = {}) {
     `
 
     if (category) { values.push(category); filters.push(`r.category_id = $${values.length}`) }
-    if (status)   { values.push(status);   filters.push(`r.status = $${values.length}`) }
+    if (status) { values.push(status); filters.push(`r.status = $${values.length}`) }
     if (priority) { values.push(priority); filters.push(`r.priority = $${values.length}`) }
 
     if (filters.length > 0) query += ` WHERE ${filters.join(" AND ")}`
@@ -117,7 +121,11 @@ export async function getReportById(id) {
             COUNT(DISTINCT cm.id)::int AS comment_count,
             COUNT(DISTINCT uv.id)::int AS upvote_count,
             COALESCE(
-                JSON_AGG(ri.image_url ORDER BY ri.sort_order ASC) FILTER (WHERE ri.image_url IS NOT NULL),
+                (
+                    SELECT JSON_AGG(ri.image_url ORDER BY ri.sort_order ASC)
+                    FROM report_images ri
+                    WHERE ri.report_id = r.id
+                ),
                 '[]'
             ) AS images
          FROM reports r
@@ -125,7 +133,6 @@ export async function getReportById(id) {
          LEFT JOIN categories c ON r.category_id = c.id
          LEFT JOIN comments cm ON cm.report_id = r.id
          LEFT JOIN report_upvotes uv ON uv.report_id = r.id
-         LEFT JOIN report_images ri ON ri.report_id = r.id
          WHERE r.id = $1
          GROUP BY r.id, u.name, c.name`,
         [id]

@@ -6,13 +6,19 @@ import {
 
 export async function handleCreateComment(req, res) {
     try {
-        const { report_id, comment } = req.body
-        // Auto-detect type dari role user
+        const { report_id, comment, parent_id = null } = req.body
+
         const type = (req.user.role === "admin" || req.user.role === "superadmin")
             ? "official"
             : "public"
 
-        const data = await createComment({ report_id, user_id: req.user.id, comment, type })
+        const data = await createComment({
+            report_id,
+            user_id: req.user.id,
+            comment,
+            type,
+            parent_id,
+        })
         res.status(201).json(data)
     } catch (err) {
         res.status(500).json({ message: err.message })
