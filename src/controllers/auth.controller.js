@@ -1,8 +1,7 @@
 import { registerSchema, loginSchema } from "../validation/auth.validation.js"
 import { successResponse, errorResponse } from "../utils/response.js"
-import { registerUser, loginUser } from "../services/auth.service.js"
+import { registerUser, loginUser, verifyEmailAndName, resetPasswordByName } from "../services/auth.service.js"
 import { ZodError } from "zod"
-import { verifyEmailAndName, resetPasswordByName } from "../services/auth.service.js"
 
 export async function register(req, res) {
     try {
